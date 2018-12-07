@@ -1,0 +1,43 @@
+sudo adduser myappuser
+sudo mkdir -p ~myappuser/.ssh
+
+touch $HOME/.ssh/authorized_keys
+
+sudo sh -c "cat $HOME/.ssh/authorized_keys >> ~myappuser/.ssh/authorized_keys"
+
+sudo chown -R myappuser: ~myappuser/.ssh
+
+sudo chmod 700 ~myappuser/.ssh
+
+sudo sh -c "chmod 600 ~myappuser/.ssh/*"
+sudo apt-get install -y git
+sudo mkdir -p /var/www/myapp
+
+sudo chown myappuser: /var/www/myapp
+cd /var/www/myapp
+
+sudo -u myappuser -H git clone --branch=end_result https://github.com/phusion/passenger-python-flask-demo.git code
+sudo pip install flask
+su<VirtualHost *:80>
+    ServerName yourserver.com
+
+    # Tell Apache and Passenger where your app's code directory is
+    DocumentRoot /var/www/myapp/code/public
+    PassengerAppRoot /var/www/myapp/code
+
+    # Tell Passenger that your app is a Python app
+    PassengerAppType wsgi
+    PassengerStartupFile passenger_wsgi.py
+
+    # Relax Apache security settings
+    <Directory /var/www/myapp/code/public>
+      Allow from all
+      Options -MultiViews
+      # Uncomment this if you're on Apache >= 2.4:
+      #Require all granted
+    </Directory>
+</VirtualHost>do nano /etc/apache2/sites-enabled/myapp.conf
+sudo apache2ctl restart
+curl http://yourserver.com/
+...your app's front page HTML...
+
